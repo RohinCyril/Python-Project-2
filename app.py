@@ -1,29 +1,40 @@
 from flask import Flask
+import config
 
-from config import UPLOAD_FOLDER
-from config import MAX_CONTENT_LENGTH
-
-from routes.upload import upload_bp
-
-import os
-
-app = Flask(__name__)
-
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-app.register_blueprint(upload_bp)
+from api import register_blueprints
 
 
-@app.route("/")
-def home():
+def create_app():
+    """
+    Create and configure the Flask application.
+    """
+    app = Flask(__name__)
 
-    return {
-        "message": "Large File Upload API"
-    }
+    # Load configuration
+    app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
+    app.config["TRANSCODED_FOLDER"] = config.TRANSCODED_FOLDER
+    app.config["HLS_FOLDER"] = config.HLS_FOLDER
+    app.config["MAX_CONTENT_LENGTH"] = config.MAX_CONTENT_LENGTH
+    app.config["SECRET_KEY"] = config.SECRET_KEY
 
+    # Register API blueprints
+    register_blueprints(app)
+
+    @app.route("/")
+    def home():
+        return {
+            "message": "Video Transcoding Pipeline API",
+            "status": "Running"
+        }
+
+    return app
+
+
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host=config.HOST,
+        port=config.PORT,
+        debug=config.DEBUG
+    )
